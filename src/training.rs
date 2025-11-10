@@ -5,15 +5,16 @@ use crate::{
     model::Model,
 };
 
-use log::{info, debug};
+use log::{debug, info};
 
+use burn::optim::AdamWConfig;
 use burn::{
     data::{
         dataloader::DataLoaderBuilder,
         dataset::{
-            Dataset,
             transform::{ComposedDataset, MapperDataset, PartialDataset, SamplerDataset},
             vision::{MnistDataset, MnistItem},
+            Dataset,
         },
     },
     lr_scheduler::{
@@ -24,15 +25,14 @@ use burn::{
     record::{CompactRecorder, NoStdTrainingRecorder},
     tensor::backend::AutodiffBackend,
     train::{
-        EvaluatorBuilder, LearnerBuilder, MetricEarlyStoppingStrategy, StoppingCondition,
         metric::{
-            AccuracyMetric, LearningRateMetric, LossMetric,
             store::{Aggregate, Direction, Split},
+            AccuracyMetric, LearningRateMetric, LossMetric,
         },
         renderer::MetricsRenderer,
+        EvaluatorBuilder, LearnerBuilder, MetricEarlyStoppingStrategy, StoppingCondition,
     },
 };
-use burn::{optim::AdamWConfig};
 
 static ARTIFACT_DIR: &str = "/tmp/burn-example-mnist";
 
@@ -64,7 +64,7 @@ fn create_artifact_dir(artifact_dir: &str) {
 pub fn run<B: AutodiffBackend>(device: B::Device) {
     info!("=== Démarrage de l'entraînement ===");
     create_artifact_dir(ARTIFACT_DIR);
-    
+
     // Config
     info!("Configuration de l'optimiseur AdamW");
     let config_optimizer = AdamWConfig::new()
@@ -72,9 +72,11 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
         .with_weight_decay(5e-5);
 
     let config = MnistTrainingConfig::new(config_optimizer);
-    info!("Configuration: {} epochs, batch_size={}, seed={}", 
-          config.num_epochs, config.batch_size, config.seed);
-    
+    info!(
+        "Configuration: {} epochs, batch_size={}, seed={}",
+        config.num_epochs, config.batch_size, config.seed
+    );
+
     B::seed(&device, config.seed);
     debug!("Seed initialisé: {}", config.seed);
 
@@ -85,20 +87,28 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
     let dataset_train_original = Arc::new(MnistDataset::train());
     let dataset_train_plain = PartialDataset::new(dataset_train_original.clone(), 0, 55_000);
     let dataset_valid_plain = PartialDataset::new(dataset_train_original.clone(), 55_000, 60_000);
-    info!("Dataset train: {} échantillons, validation: {} échantillons", 
-          dataset_train_plain.len(), dataset_valid_plain.len());
+    info!(
+        "Dataset train: {} échantillons, validation: {} échantillons",
+        dataset_train_plain.len(),
+        dataset_valid_plain.len()
+    );
 
     debug!("Génération des identifiants de transformation pour train");
     let ident_trains = generate_idents(Some(10000));
     debug!("Génération des identifiants de transformation pour validation");
     let ident_valid = generate_idents(None);
-    info!("{} transformations appliquées au dataset d'entraînement", ident_trains.len());
-    
+    info!(
+        "{} transformations appliquées au dataset d'entraînement",
+        ident_trains.len()
+    );
+
     let dataset_train = DatasetIdent::compose(ident_trains, dataset_train_plain);
     let dataset_valid = DatasetIdent::compose(ident_valid, dataset_valid_plain);
 
-    info!("Création des dataloaders (batch_size={}, workers={})", 
-          config.batch_size, config.num_workers);
+    info!(
+        "Création des dataloaders (batch_size={}, workers={})",
+        config.batch_size, config.num_workers
+    );
     let dataloader_train = DataLoaderBuilder::new(MnistBatcher::default())
         .batch_size(config.batch_size)
         .shuffle(config.seed)
@@ -109,7 +119,7 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
         .shuffle(config.seed)
         .num_workers(config.num_workers)
         .build(dataset_valid);
-    
+
     info!("Configuration du scheduler de learning rate (cosine + warmup + decay)");
     let lr_scheduler = ComposedLrSchedulerConfig::new()
         .cosine(CosineAnnealingLrSchedulerConfig::new(1.0, 2000))
@@ -145,11 +155,14 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
     info!("Chargement du dataset de test");
     let dataset_test_plain = Arc::new(MnistDataset::test());
     info!("Dataset de test: {} échantillons", dataset_test_plain.len());
-    
+
     let mut renderer = result.renderer;
 
     let idents_tests = generate_idents(None);
-    info!("Évaluation sur {} configurations de transformation", idents_tests.len());
+    info!(
+        "Évaluation sur {} configurations de transformation",
+        idents_tests.len()
+    );
 
     for (ident, _) in idents_tests {
         let name = ident.to_string();

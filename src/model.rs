@@ -1,9 +1,9 @@
 use crate::data::MnistBatch;
 use burn::{
     nn::{
-        BatchNorm, PaddingConfig2d,
         loss::CrossEntropyLossConfig,
         pool::{MaxPool2d, MaxPool2dConfig},
+        BatchNorm, PaddingConfig2d,
     },
     prelude::*,
     tensor::backend::AutodiffBackend,
