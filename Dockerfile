@@ -10,14 +10,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy manifest files
-COPY Cargo.toml ./
+COPY Cargo.toml Cargo.lock ./
 
 COPY src ./src
 
 # Build the project in release mode
 RUN cargo build --release
-
-COPY Cargo.lock ./
 
 # Runtime stage
 FROM debian:bookworm-slim
