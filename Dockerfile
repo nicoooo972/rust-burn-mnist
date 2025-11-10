@@ -10,7 +10,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy manifest files
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml ./
+
+RUN if [ ! -f Cargo.lock ]; then cargo build; fi
 
 # Copy source code
 COPY src ./src
