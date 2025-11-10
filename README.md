@@ -7,7 +7,7 @@ Projet de classification d'images MNIST utilisant le framework [Burn](https://bu
 
 ## Description
 
-Ce projet implémente un réseau de neurones convolutif (CNN) pour la classification des chiffres manuscrits du dataset MNIST (0-9). Il utilise Burn 0.19.1, un framework de deep learning moderne et performant en Rust.
+Ce projet implémente un réseau de neurones convolutif (CNN) pour la classification des chiffres manuscrits du dataset MNIST (0-9). Il utilise Burn 0.19.1.
 
 ## Architecture du modèle
 
@@ -52,6 +52,8 @@ Les dépendances sont définies dans `Cargo.toml` :
 - `burn-ndarray` (0.19.1)
 - `burn-autodiff` (0.19.1)
 - `rand` (0.9.2)
+- `log` (0.4)
+- `env_logger` (0.11)
 
 ## Structure du projet
 
