@@ -71,10 +71,33 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
         .with_cautious_weight_decay(true)
         .with_weight_decay(5e-5);
 
-    let config = MnistTrainingConfig::new(config_optimizer);
+    // Read configuration from environment variables or use defaults
+    let num_epochs = std::env::var("NUM_EPOCHS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(20);
+    let batch_size = std::env::var("BATCH_SIZE")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(256);
+    let num_workers = std::env::var("NUM_WORKERS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(8);
+    let seed = std::env::var("SEED")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(42);
+
+    let mut config = MnistTrainingConfig::new(config_optimizer);
+    config.num_epochs = num_epochs;
+    config.batch_size = batch_size;
+    config.num_workers = num_workers;
+    config.seed = seed;
+
     info!(
-        "Configuration: {} epochs, batch_size={}, seed={}",
-        config.num_epochs, config.batch_size, config.seed
+        "Configuration: {} epochs, batch_size={}, num_workers={}, seed={}",
+        config.num_epochs, config.batch_size, config.num_workers, config.seed
     );
 
     B::seed(&device, config.seed);
